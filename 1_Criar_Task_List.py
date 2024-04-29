@@ -56,7 +56,7 @@ my_path = path + '/pages/files/'
 uploaded_file = st.sidebar.file_uploader("Carregar Dados Chave",
 help="Carregar arquivo com dados necessários do SAP. Caso precise recarregá-lo, atualize a página. Este arquivo deve ser continuamente atualizado conforme novos dados sejam inseridos no SAP"
                                          )
-if uploaded_file is not None:
+if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     if 'SAP_CTPM' not in st.session_state:
         with st.spinner('Carregando Lista de Equipamentos...'):
             SAP_EQP_N6 = pd.read_excel(uploaded_file, sheet_name="EQP", skiprows=0,dtype=str)
