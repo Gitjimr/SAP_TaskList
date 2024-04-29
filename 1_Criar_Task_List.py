@@ -484,7 +484,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             OP_PADRAO_SHOW_OBS.loc[len(OP_PADRAO_SHOW_OBS)] = [i, "MÁQUINA PARADA COM PERIODICIDADE < 1M"]
 
         ### TL com apenas uma operação  <>
-        if OP_PADRAO_SHOW['TASK LIST ORIGINAL'].value_counts()[OP_PADRAO_SHOW['TASK LIST ORIGINAL'][i]] <= 2:
+        if len(OP_PADRAO_SHOW[OP_PADRAO_SHOW['TASK LIST ORIGINAL']==OP_PADRAO_SHOW['TASK LIST ORIGINAL'][i]]) <= 1:
             OP_PADRAO_SHOW_OBS.loc[len(OP_PADRAO_SHOW_OBS)] = [i, "TASK LIST COM APENAS UMA OPERAÇÃO"]
 
         ## AJUSTE:
