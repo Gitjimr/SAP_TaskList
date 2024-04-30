@@ -36,7 +36,17 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
+st.markdown(
+    """
+    <style>
+    .st-emotion-cache-ch5dnh
+    {
+        visibility: hidden;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 import os
 
