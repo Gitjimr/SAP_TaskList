@@ -278,6 +278,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         op_qtdmaterial = ''
         op_undmaterial = ''
 
+    adc_op_mat = col1.button(label='Adicionar Operação')
 
     #col2.table(SAP_EQP_filt.head(20))
     col3, col4, col5 = col2.columns([2, 3, 6])
@@ -317,7 +318,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     else:
         OP_PADRAO = st.session_state['OP_PADRAO']
 
-    if adc_op:      #  Ao clicar botão de adicionar operação
+    if adc_op or adc_op_mat:      #  Ao clicar botão de adicionar operação
         for i in range(len(op_eqp_)):
 
             lista_add_OP_PADRAO = [op_eqp_[i],op_eqp_id[i],np.nan,np.nan,np.nan,op_tipoativ,op_erota,op_trecho2tasklist,op_espec,op_periodicidade,op_estadomaq]
