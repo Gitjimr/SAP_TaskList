@@ -290,7 +290,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         op_qtdmaterial = ''
         op_undmaterial = ''
 
-    adc_op_mat = col1.button(label='Adicionar Operação')
+    adc_op_mat = col1.button(label='Adicionar Operação (Material)')
 
     #col2.table(SAP_EQP_filt.head(20))
     col3, col4, col5 = col2.columns([2, 3, 6])
