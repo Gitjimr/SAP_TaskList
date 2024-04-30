@@ -36,6 +36,18 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown(
+    """
+    <style>
+    .st-emotion-cache-ch5dnh ef3psqc5
+    {
+        visibility: hidden;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Função para realizar checagem: Exluir linhas completamente nulas, duplicatas e resetar o índice
 
 def checagem_df(df):
