@@ -43,6 +43,14 @@ st.markdown(
     {
         visibility: hidden;
     }
+    .st-emotion-cache-q16mip
+    {
+        visibility: hidden;
+    }
+    .st-emotion-cache-ztfqz8
+    {
+        visibility: hidden;
+    }
     </style>
     """,
     unsafe_allow_html=True
