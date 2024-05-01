@@ -52,12 +52,15 @@ st.markdown(
 
 def checagem_df(df):
     df = df.drop_duplicates()
-    df = df.dropna(how='all')
+    #df = df.dropna(how='all')
     df = df.reset_index(drop=True)
 
     return df
 
-
+def checagem_OP_PADRAO():
+    OP_PADRAO.drop_duplicates(subset=['TASK LIST ORIGINAL', 'OPERACAO PADRAO', 'TIPO EQUIPAMENTO', 'MATERIAL'],
+                              inplace=True)
+    OP_PADRAO.reset_index(drop=True, inplace=True)
 #
 
 import os
@@ -84,6 +87,8 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             SAP_CTPM = pd.read_excel(uploaded_file, sheet_name="CTPM", skiprows=0, dtype=str)
         with st.spinner('Carregando Materiais SAP...'):
             SAP_MATERIAIS = pd.read_excel(uploaded_file, sheet_name="MATERIAIS", skiprows=0, dtype=str)
+            SAP_MATERIAIS.dropna(subset='Material',inplace=True)
+            SAP_MATERIAIS.reset_index(drop=True, inplace=True)
 
             st.session_state.SAP_EQP_N6 = SAP_EQP_N6
             st.session_state.SAP_EQP = SAP_EQP
@@ -126,13 +131,15 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         op_eqp = col1.multiselect(
             label='Selecione o ID SAP dos equipamentos a receberem a operação',
             options=list(SAP_EQP_filt['Equipamento'].unique()),
+            placeholder="Selecione o(s) equipamento(s)",
             key='OP_EQP'
         )
-    except:
+    except:     #   Caso mude para alguma planta sem o número do equipamento
         del st.session_state['OP_EQP']
         op_eqp = col1.multiselect(
             label='Selecione o ID SAP dos equipamentos a receberem a operação',
-            options=list(SAP_EQP_filt['Equipamento'].unique())
+            options=list(SAP_EQP_filt['Equipamento'].unique()),
+            placeholder="Selecione o(s) equipamento(s)"
         )
     op_eqp_ = []
     op_eqp_id = []
@@ -154,8 +161,8 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     #   Selecionar operação
     op_oppadrao = col1.text_input(label='Operação Padrão',
-                                max_chars=40,key='OP_OPPADRAO',help='Escreva o texto descritivo principal da operação em 40 caracteres. Abrevie se necessário.')
-    op_optextolongo = col1.text_area(label='Texto Longo',key='OP_OPTEXTOLONGO',help='Escreva um texto detalhado da operação ou um que contenha detalhes adicionais não presentes no texto principal.')
+                                max_chars=40,key='OP_OPPADRAO',placeholder="Digite aqui",help='Escreva o texto descritivo principal da operação em 40 caracteres. Abrevie se necessário.')
+    op_optextolongo = col1.text_area(label='Texto Longo',key='OP_OPTEXTOLONGO',placeholder="Digite aqui",help='Escreva um texto detalhado da operação ou um que contenha detalhes adicionais não presentes no texto principal.')
     op_oppadrao = unidecode(op_oppadrao.upper())
     op_oppadrao = op_oppadrao.strip()
     op_optextolongo = unidecode(op_optextolongo.upper())
@@ -170,7 +177,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             options=lista_ctpms,
             key='OP_CTPM',
         )
-    except:
+    except:     #   Caso mude para uma planta sem o CTPM
         if 'OP_CTPM' in st.session_state:
             del st.session_state['OP_CTPM']
             op_ctpm = col1.selectbox(
@@ -225,7 +232,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         options=['SIM', 'NÃO'],key='OP_EROTA'
     )
     if op_erota == 'NÃO':
-        op_trecho2tasklist = col1.text_input(label='Descrição de equipamento/componente da Lista de Tarefa',
+        op_trecho2tasklist = col1.text_input(label='Descrição de equipamento/componente da Lista de Tarefa',placeholder="Digite aqui",
                             max_chars=20-len(op_periodicidade) if op_estadomaq == 1 else 25-len(op_periodicidade),# if op_erota == 'NÃO' and op_estadomaq == 0 else '',
                             help='Texto que aparecerá no cabeçalho da lista de tarefas e do item no SAP. Caso seja rota, será o local de instalação.',key='OP_TRECHO2TASKLIST')
         op_trecho2tasklist = op_trecho2tasklist.upper()
@@ -254,50 +261,60 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     op_temmaterial = col1.radio(
         label='Operação possui material?',
-        options=['NÃO', 'SIM'],key='OP_TEMMATERIAL'
+        options=['NÃO', 'SIM'],
+        key='OP_TEMMATERIAL'
     )
+
     if op_temmaterial == 'SIM':
-        try:
-            op_material = col1.selectbox(label='Selecione o código do material',
-                                options=list(SAP_MATERIAIS['Material']),
-                                key='OP_MATERIAL'
-                                         )
+        op_material_options = SAP_MATERIAIS['Material'].unique()
+        if 'OP_MATERIAL' not in st.session_state:
+            op_material = col1.selectbox(
+                label='Selecione o código do material',
+                options=op_material_options,
+                placeholder="Selecione o material",
+                index = None,
+                key='OP_MATERIAL'
+            )
+        else:
+            op_material = col1.selectbox(
+                label='Selecione o código do material',
+                options=op_material_options,
+                index = None,
+                placeholder="Selecione o material"
+            )
 
-            index_procurado = SAP_MATERIAIS[SAP_MATERIAIS['Material'] == op_material].index[0]
-            op_undmaterial = SAP_MATERIAIS['UM básica'][index_procurado]
-            col1.write(SAP_MATERIAIS['Texto breve material'][index_procurado])
+        op_qtdmaterial = col1.number_input(
+            label='Quantidade do material',
+            format='%f',
+            min_value=0.1,
+            placeholder="Digite a quantidade",
+            step=1.,
+            key='OP_QTDMATERIAL'
+        )
 
-            op_qtdmaterial = col1.number_input(label='Quantidade do material',
-                                format='%f',
-                                step=1.,
-                                key='OP_QTDMATERIAL'
-                                         )
-        except:
-            op_material = col1.selectbox(label='Selecione o código do material',
-                                         options=list(SAP_MATERIAIS['Material']),
-                                         )
-
-            index_procurado = SAP_MATERIAIS[SAP_MATERIAIS['Material'] == op_material].index[0]
-            op_undmaterial = SAP_MATERIAIS['UM básica'][index_procurado]
-            col1.write(SAP_MATERIAIS['Texto breve material'][index_procurado])
-
-            op_qtdmaterial = col1.number_input(label='Quantidade do material',
-                                               format='%f',
-                                               step=1.,
-                                               )
+        index_procurado = SAP_MATERIAIS[SAP_MATERIAIS['Material'] == op_material].index
+        if not index_procurado.empty:
+            index_procurado = index_procurado[0]
+            op_undmaterial = SAP_MATERIAIS.at[index_procurado, 'UM básica']
+            col1.write(SAP_MATERIAIS.at[index_procurado, 'Texto breve material'])
+        else:
+            op_material = ''
+            op_qtdmaterial = ''
+            op_undmaterial = ''
+            #op_temmaterial = 'NÃO'
     else:
         op_material = ''
         op_qtdmaterial = ''
         op_undmaterial = ''
 
-    adc_op_mat = col1.button(label='Adicionar Operação (Material)')
 
     #col2.table(SAP_EQP_filt.head(20))
-    col3, col4, col5 = col2.columns([2, 3, 6])
-    #   Adicionar operação
-    adc_op = col3.button(label='Adicionar Operação')
+    col3, col4, col5 = col2.columns([2, 4, 2])
+
+
     #   Limpar operação
-    limpar_op = col4.button(label='Limpar Todas as Operações')
+    limpar_op = col5.button(label='Limpar Todas as Operações',use_container_width =True)
+
 
     if 'OP_PADRAO' not in st.session_state or limpar_op:
         OP_PADRAO = pd.DataFrame({
@@ -330,7 +347,28 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     else:
         OP_PADRAO = st.session_state['OP_PADRAO']
 
+
+    #   Adicionar operação e materiais
+    adc_op = col3.button(label='Adicionar Operação', use_container_width=True,
+                         disabled=(
+                                 (op_temmaterial == 'SIM' and op_material == '') or
+                                 (op_erota == 'NÃO' and op_trecho2tasklist == '') or
+                                 op_oppadrao == '' or
+                                 op_eqp is None
+                         ), on_click=checagem_OP_PADRAO
+                         )
+
+    adc_op_mat = col1.button(label='Adicionar Operação (Material)',
+                         disabled=(
+                                 (op_temmaterial == 'SIM' and op_material=='') or
+                                 (op_erota == 'NÃO' and op_trecho2tasklist == '') or
+                                 op_oppadrao == '' or
+                                 op_eqp is None
+                         ),on_click=checagem_OP_PADRAO
+                         )
+
     if adc_op or adc_op_mat:      #  Ao clicar botão de adicionar operação
+        checagem_OP_PADRAO()
         for i in range(len(op_eqp_)):
 
             lista_add_OP_PADRAO = [op_eqp_[i],op_eqp_id[i],np.nan,np.nan,np.nan,op_tipoativ,op_erota,op_trecho2tasklist,op_espec,op_periodicidade,op_estadomaq]
@@ -361,8 +399,8 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             lista_add_OP_PADRAO = lista_add_OP_PADRAO + [plant_option]
 
             OP_PADRAO.loc[len(OP_PADRAO)] = lista_add_OP_PADRAO #   Adicionar nova linha
-        st.session_state['OP_PADRAO'] = OP_PADRAO
 
+    # Planilha de equipamentos
     EQUIPAMENTOS = pd.DataFrame({})  # Inicializar DataFrame vazio
     for i in range(len(OP_PADRAO["TIPO EQUIPAMENTO"])):
         ## Copiar SAP_EQP_N6 apenas na primeira iteração
@@ -403,57 +441,8 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     OP_PADRAO.drop(OP_PADRAO[(OP_PADRAO['QTD_MATERIAL'] == 0) & (OP_PADRAO['TEM MATERIAL?'] == 'SIM')].index, inplace=True)
     OP_PADRAO.reset_index(drop=True, inplace=True)
 
-
-    #   Remover linha de operação específica
-    #col2.divider()
-    opcoes = ['Selecione o índice da linha'] + [indice for indice in OP_PADRAO.index.tolist()]
-    index_remov_edit = col5.selectbox(label='Selecione uma linha para editar ou excluir:', options=opcoes,key='remov_edit')
-
-    def reset():
-        st.session_state.remov_edit = 'Selecione o índice da linha'
-        st.session_state.PLANT_OPTION = OP_PADRAO["Planta*"][index_remov_edit]
-        st.session_state.OP_EQP = OP_PADRAO["TIPO EQUIPAMENTO"][index_remov_edit]
-        st.session_state.OP_CTPM = OP_PADRAO["CT PM"][index_remov_edit]
-        st.session_state.OP_OPPADRAO = OP_PADRAO["OPERACAO PADRAO"][index_remov_edit]
-        st.session_state.OP_OPTEXTOLONGO = OP_PADRAO["TEXTO DESCRITIVO"][index_remov_edit]
-        st.session_state.OP_TIPOATIV = OP_PADRAO["TIPO ATIV"][index_remov_edit]
-        st.session_state.OP_PERIODICIDADE = OP_PADRAO["PERIODICIDADE"][index_remov_edit]
-        st.session_state.OP_ESTADOMAQ = OP_PADRAO["ESTADO MAQ"][index_remov_edit]
-        st.session_state.OP_EROTA = OP_PADRAO["ROTA?"][index_remov_edit]
-        st.session_state.OP_ESPEC = OP_PADRAO["ESPECIALIDADE"][index_remov_edit]
-        st.session_state.OP_DURACAO = OP_PADRAO["DUR_NORMAL_MIN"][index_remov_edit]
-        st.session_state.OP_OPERAD = OP_PADRAO["QTD"][index_remov_edit]
-        st.session_state.OP_TRECHO2TASKLIST = OP_PADRAO["TRECHO 02_TASK LIST"][index_remov_edit]
-
-        st.session_state.OP_TEMMATERIAL = OP_PADRAO["TEM MATERIAL?"][index_remov_edit]
-        st.session_state.OP_MATERIAL = OP_PADRAO["MATERIAL"][index_remov_edit]
-        st.session_state.OP_QTDMATERIAL = OP_PADRAO["QTD_MATERIAL"][index_remov_edit]
-        #st.session_state.UND_MATERIAL = OP_PADRAO["UND_MATERIAL"][index_remov_edit]
-
-        if index_remov_edit != 'Selecione o índice da linha':
-            OP_PADRAO.drop(int(index_remov_edit), inplace=True)
-            OP_PADRAO.reset_index(drop=True, inplace=True)
-
-
-    excluir_linha = col5.button('Selecionar linha', on_click=reset)
     col2.divider()
 
-    st.session_state['OP_PADRAO'] = OP_PADRAO
-
-
-    # Tabelas de operações
-    OP_PADRAO_SHOW = OP_PADRAO[['TASK LIST ORIGINAL','TEXTO TIPO EQUIPAMENTO','TIPO EQUIPAMENTO','OPERACAO PADRAO','TEXTO DESCRITIVO','CT PM','DUR_NORMAL_MIN',
-                                'QTD','TRABALHO_MIN','MATERIAL','QTD_MATERIAL','UND_MATERIAL','Planta*']]
-
-    ##   Ajustando planilha op_padrao - sem materiais (OP_PADRAO_OFC)
-    OP_PADRAO.sort_values(by=['Planta*','TEXTO TIPO EQUIPAMENTO','ESPECIALIDADE','PERIODICIDADE'],
-                          inplace=True)  # Ordem original da op_padrao (por equipamento)
-
-    OP_PADRAO_OFC = OP_PADRAO.copy()
-    OP_PADRAO_OFC.drop(columns=['TEM MATERIAL?', 'MATERIAL', 'QTD_MATERIAL', 'UND_MATERIAL'], inplace=True)
-    OP_PADRAO_OFC.drop_duplicates(subset=None, inplace=True)  # Para remover todas as linhas duplicadas
-
-    #col2.write(OP_PADRAO_OFC)
 
     col2.subheader("Listas de Tarefas Geradas", divider='gray', anchor=False)
 
@@ -461,11 +450,71 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     ❗  Após a conclusão: enviar arquivo para :red[João Ivo] (ter08334@mdb.com.br)
                   """)
 
+    OP_PADRAO.drop_duplicates(subset=['TASK LIST ORIGINAL', 'OPERACAO PADRAO','TIPO EQUIPAMENTO','MATERIAL'], inplace=True)
+    OP_PADRAO.reset_index(drop=True, inplace=True)
+
+    if not OP_PADRAO.empty:    #   Caso o df esteja vazio
+        OP_PADRAO = col2.data_editor(
+            OP_PADRAO,
+            column_order=[
+            'TASK LIST ORIGINAL', 'OPERACAO PADRAO', 'TEXTO DESCRITIVO', 'TEXTO TIPO EQUIPAMENTO', 'TIPO EQUIPAMENTO',
+            'CT PM', 'DUR_NORMAL_MIN',
+            'QTD', 'TRABALHO_MIN', 'MATERIAL', 'QTD_MATERIAL', 'UND_MATERIAL', 'Planta*'],
+            disabled=["TASK LIST ORIGINAL", "TEXTO TIPO EQUIPAMENTO", "TIPO EQUIPAMENTO", "EQUIPAMENTO", "CT PM",
+                      "MATERIAL", "TRABALHO_MIN", "UND_MATERIAL", "Planta*"],
+            column_config={
+                "QTD": st.column_config.NumberColumn(
+                    min_value=1,
+                    format="%d",
+                ),
+                "DUR_NORMAL_MIN": st.column_config.NumberColumn(
+                    min_value=1,
+                    format="%d",
+                ),
+                "QTD_MATERIAL": st.column_config.NumberColumn(
+                    min_value=0.1,
+                    format="%f",
+                ),
+                "OPERACAO PADRAO": st.column_config.TextColumn(
+                    required=True,
+                    max_chars=40
+                )
+            }
+        )
+
+
+    # Função para converter para uppercase se string
+    def upper_if_string(x):
+        if isinstance(x, str):
+            return x.upper()
+        return x
+    ## Aplicar a função à coluna desejada
+    OP_PADRAO['OPERACAO PADRAO'] = OP_PADRAO['OPERACAO PADRAO'].apply(upper_if_string)
+    OP_PADRAO['TEXTO DESCRITIVO'] = OP_PADRAO['TEXTO DESCRITIVO'].apply(upper_if_string)
+
+    # Ajuste trabalho total
+    OP_PADRAO["TRABALHO_MIN"] = OP_PADRAO["QTD"]*OP_PADRAO["DUR_NORMAL_MIN"]
+
+
+    ##   Ajustando planilha op_padrao - sem materiais (OP_PADRAO_OFC)
+    OP_PADRAO_OFC = OP_PADRAO.copy()
+    OP_PADRAO_OFC.sort_values(by=['Planta*','TEXTO TIPO EQUIPAMENTO','ESPECIALIDADE','PERIODICIDADE'],
+                          inplace=True)  # Ordem original da op_padrao (por equipamento)
+    OP_PADRAO_OFC.drop(columns=['TEM MATERIAL?', 'MATERIAL', 'QTD_MATERIAL', 'UND_MATERIAL'], inplace=True)
+    OP_PADRAO_OFC.drop_duplicates(subset=None, inplace=True)  # Para remover todas as linhas duplicadas
+
+
     # Download Button
+    col2.subheader("⬇️ Download", divider='gray', anchor=False)
+
+    OP_PADRAO_TASK_LIST = OP_PADRAO[[
+        'TASK LIST ORIGINAL', 'OPERACAO PADRAO', 'TEXTO DESCRITIVO', 'TEXTO TIPO EQUIPAMENTO', 'TIPO EQUIPAMENTO',
+        'CT PM', 'DUR_NORMAL_MIN',
+        'QTD', 'TRABALHO_MIN', 'MATERIAL', 'QTD_MATERIAL', 'UND_MATERIAL', 'Planta*']]
     import io
     buffer1 = io.BytesIO()
     with pd.ExcelWriter(buffer1, engine="xlsxwriter") as writer:
-        OP_PADRAO_SHOW.to_excel(writer, sheet_name="Task_Lists", index=False)
+        OP_PADRAO_TASK_LIST.to_excel(writer, sheet_name="Task_Lists", index=False)
         EQUIPAMENTOS.to_excel(writer, sheet_name="EQUIPAMENTOS", index=False)
         OP_PADRAO_OFC.to_excel(writer, sheet_name="op_padrao", index=False)
         # Close the Pandas Excel writer and output the Excel file to the buffer
@@ -477,46 +526,81 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             file_name="Op_Padrao_SAP.xlsx"
         )
 
-    col2.write(OP_PADRAO_SHOW)
+    def reset():
+        if not OP_PADRAO.empty:
+            st.session_state.remov_edit = None
+            st.session_state.PLANT_OPTION = OP_PADRAO["Planta*"][index_remov_edit]
+            st.session_state.OP_EQP = OP_PADRAO["TIPO EQUIPAMENTO"][index_remov_edit]
+            st.session_state.OP_CTPM = OP_PADRAO["CT PM"][index_remov_edit]
+            st.session_state.OP_OPPADRAO = OP_PADRAO["OPERACAO PADRAO"][index_remov_edit]
+            st.session_state.OP_OPTEXTOLONGO = OP_PADRAO["TEXTO DESCRITIVO"][index_remov_edit]
+            st.session_state.OP_TIPOATIV = OP_PADRAO["TIPO ATIV"][index_remov_edit]
+            st.session_state.OP_PERIODICIDADE = OP_PADRAO["PERIODICIDADE"][index_remov_edit]
+            st.session_state.OP_ESTADOMAQ = OP_PADRAO["ESTADO MAQ"][index_remov_edit]
+            st.session_state.OP_EROTA = OP_PADRAO["ROTA?"][index_remov_edit]
+            st.session_state.OP_ESPEC = OP_PADRAO["ESPECIALIDADE"][index_remov_edit]
+            st.session_state.OP_DURACAO = OP_PADRAO["DUR_NORMAL_MIN"][index_remov_edit]
+            st.session_state.OP_OPERAD = OP_PADRAO["QTD"][index_remov_edit]
+            st.session_state.OP_TRECHO2TASKLIST = OP_PADRAO["TRECHO 02_TASK LIST"][index_remov_edit]
+            st.session_state.OP_TEMMATERIAL = OP_PADRAO["TEM MATERIAL?"][index_remov_edit]
+            st.session_state.OP_MATERIAL = OP_PADRAO["MATERIAL"][index_remov_edit]
+            st.session_state.OP_QTDMATERIAL = OP_PADRAO["QTD_MATERIAL"][index_remov_edit] if not isinstance(OP_PADRAO["QTD_MATERIAL"][index_remov_edit], str) else None
+            #st.session_state.UND_MATERIAL = OP_PADRAO["UND_MATERIAL"][index_remov_edit]
+            OP_PADRAO.drop(int(index_remov_edit), inplace=True)
+            OP_PADRAO.reset_index(drop=True, inplace=True)
 
-    # Tabela de ajustes necessários e observações (revisão)
+
+    #   Remover linha de operação específica
+    OP_PADRAO.drop_duplicates(inplace=True)
+    OP_PADRAO.reset_index(drop=True, inplace=True)
+    opcoes = [indice for indice in OP_PADRAO.index.tolist()]
+
+    index_remov_edit = col4.selectbox(label='Selecione uma linha para editar ou excluir:',
+                                      placeholder="Selecione o índice da linha", options=opcoes, key='remov_edit')
+
+    excluir_linha = col4.button('Selecionar linha', disabled= True if index_remov_edit==None else False, on_click=reset)
+
+
+
+    # Tabela de ajustes necessários e observações (revisão) - OK
 
     OP_PADRAO_SHOW_OBS = pd.DataFrame({'ÍNDICE':[],'OBSERVAÇÃO': []})
     OP_PADRAO_SHOW_AJUS = pd.DataFrame({'ÍNDICE': [], 'AJUSTES NECESSÁRIOS': []})
 
-    for i in range(len(OP_PADRAO_SHOW['TEXTO TIPO EQUIPAMENTO'])):
+    for i in range(len(OP_PADRAO['TEXTO TIPO EQUIPAMENTO'])):
 
         ## OBS.:
 
         ## Sem texto longo  <>
-        if pd.isna(OP_PADRAO_SHOW['TEXTO DESCRITIVO'][i]):
+        if pd.isna(OP_PADRAO['TEXTO DESCRITIVO'][i]):
             OP_PADRAO_SHOW_OBS.loc[len(OP_PADRAO_SHOW_OBS)] = [i, "VERIFICAR SE TEXTO LONGO (DETALHADO) É NECESSÁRIO"]
 
         ### TL com máquina parada e peridiocidade menor que 1M  <>
-        if ' FUNC ' not in OP_PADRAO_SHOW['TASK LIST ORIGINAL'][i] and OP_PADRAO_SHOW['TASK LIST ORIGINAL'][i].split(' ')[2][-1] == 'D':
+        if ' FUNC ' not in OP_PADRAO['TASK LIST ORIGINAL'][i] and OP_PADRAO['TASK LIST ORIGINAL'][i].split(' ')[2][-1] == 'D':
             OP_PADRAO_SHOW_OBS.loc[len(OP_PADRAO_SHOW_OBS)] = [i, "MÁQUINA PARADA COM PERIODICIDADE < 1M"]
 
         ### TL com apenas uma operação  <>
-        if len(OP_PADRAO_SHOW[OP_PADRAO_SHOW['TASK LIST ORIGINAL']==OP_PADRAO_SHOW['TASK LIST ORIGINAL'][i]]) <= 1:
+        if len(OP_PADRAO[OP_PADRAO['TASK LIST ORIGINAL']==OP_PADRAO['TASK LIST ORIGINAL'][i]]) <= 1:
             OP_PADRAO_SHOW_OBS.loc[len(OP_PADRAO_SHOW_OBS)] = [i, "TASK LIST COM APENAS UMA OPERAÇÃO"]
 
         ## AJUSTE:
 
         ### Suboperação não especifica tipo de atividade? <>
-        if isinstance(OP_PADRAO_SHOW['OPERACAO PADRAO'][i], str):
-            if not any(name in OP_PADRAO_SHOW['OPERACAO PADRAO'][i] for name in
+        if isinstance(OP_PADRAO['OPERACAO PADRAO'][i], str):
+            if not any(name in OP_PADRAO['OPERACAO PADRAO'][i] for name in
                        ['INSP', 'TROC', 'REV', 'BLOQ', 'DESBLOQ', 'DOSA', 'SUB', 'VERI', 'DESL', 'LIG', 'CONEC',
                         'DESCON', 'REAL', 'LIMP', 'EFET', 'EXEC', 'TEST', 'ISOL', 'RETI', 'ABR', 'FECH', 'LUB',
                         'ESGOT',
                         'SOLIC', 'ENSA', 'CALI', 'AJUS', 'REAP', 'FIX', 'PARAF', 'INSER', 'COLOC',
                         'AJUS']) and not any(
-                letr_2 in OP_PADRAO_SHOW['OPERACAO PADRAO'][i].split()[0][-2:] for letr_2 in ['AR', 'ER', 'IR']):
+                letr_2 in OP_PADRAO['OPERACAO PADRAO'][i].split()[0][-2:] for letr_2 in ['AR', 'ER', 'IR']):
                 OP_PADRAO_SHOW_AJUS.loc[len(OP_PADRAO_SHOW_AJUS)] = [i,"VERIFICAR SE EM 'OPERAÇÃO PADRÃO' É ESPECIFICADO TIPO DE ATIVIDADE DESEMPENHADA (INSP, REVI, ETC)"]
 
     col2.subheader("Ajustes necessários", divider='gray',anchor=False)
     col2.dataframe(data=OP_PADRAO_SHOW_AJUS,hide_index=True,use_container_width=True)
     col2.subheader("Observações", divider='gray',anchor=False)
     col2.dataframe(data=OP_PADRAO_SHOW_OBS,hide_index=True,use_container_width=True)
+
 
     # Pesquisar códigos de equipamentos pelo nome
     st.subheader("🔎 Código de Equipamento por Nome", divider='gray')
@@ -536,5 +620,9 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         SAP_MATERIAIS['Texto breve material'].str.contains(str(pesquisar_mat))].copy().reset_index(drop=True)
     PROC_MAT = PROC_MAT[['Material', 'Texto breve material']]
     st.dataframe(data=PROC_MAT, hide_index=True, use_container_width=True)
+
+
+    #   Salvar no session state
+    st.session_state['OP_PADRAO'] = OP_PADRAO
 
     st.divider()
