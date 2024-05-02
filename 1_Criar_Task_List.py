@@ -237,7 +237,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     #   Selecionar se é rota e complemento da task list
     op_erota = col1.radio(
         label='Rota?',
-        options=['SIM', 'NÃO'],key='OP_EROTA'
+        options=['SIM', 'NÃO'],key='OP_EROTA',help='Sendo rota, no título da task list será o local de instalação dos equipamentos.'
     )
     if op_erota == 'NÃO':
         op_trecho2tasklist = col1.text_input(label='Descrição de equipamento/componente da Lista de Tarefa',placeholder="Digite aqui",
@@ -250,8 +250,8 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     #   Selecionar especialidade da op
     op_espec = col1.radio(
-        label='Tipo de Operação',
-        options=['MECANICA', 'ELETRICA'],key='OP_ESPEC'
+        label='Tipo de Task List',
+        options=['MECANICA', 'ELETRICA'],key='OP_ESPEC',help='Esse parâmetro estará contido no título da task list. Ele representa a especialidade para a task list como um todo.'
     )
 
     col1.divider()
