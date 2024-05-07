@@ -133,6 +133,17 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     SAP_EQP_filt = SAP_EQP_filt[SAP_EQP_clean['Local de instalação'].str.contains(str(plant_option))]
 
+    #   Selecionar equipamentos Ctrl V:
+    toggle_op_eqp = col1.toggle("Colar vários códigos de equipamento", key='CTRLV')
+    if toggle_op_eqp:
+        op_eqp_colar = col1.text_input(label='Códigos SAP dos Equipamentos Separados por Espaço', value='',
+                                       help='Colar vários códigos SAP de equipamentos separados por espaço.')
+        op_eqp_colar = op_eqp_colar.replace(',', ' ').replace('  ', ' ')
+        op_eqp_colar = op_eqp_colar.split()
+        if all(eq in SAP_EQP_filt['Equipamento'].values for eq in op_eqp_colar):
+            if 'OP_EQP' in st.session_state:
+                del st.session_state['OP_EQP']
+            st.session_state.OP_EQP = op_eqp_colar
 
     #   Selecionar equipamentos
     try:
@@ -554,6 +565,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             st.session_state.OP_MATERIAL = OP_PADRAO["MATERIAL"][index_remov_edit]
             st.session_state.OP_QTDMATERIAL = OP_PADRAO["QTD_MATERIAL"][index_remov_edit] if not isinstance(OP_PADRAO["QTD_MATERIAL"][index_remov_edit], str) else None
             #st.session_state.UND_MATERIAL = OP_PADRAO["UND_MATERIAL"][index_remov_edit]
+            st.session_state.CTRLV = False
             OP_PADRAO.drop(int(index_remov_edit), inplace=True)
             OP_PADRAO.reset_index(drop=True, inplace=True)
 
