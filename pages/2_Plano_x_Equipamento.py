@@ -164,6 +164,12 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         #eqp_tl_plan_com_li = eqp_tl_plan.copy()  # Copie o DataFrame principal para manter sua integridade
         eqp_tl_plan['LI_N5'] = eqp_tl_plan['ID Equipamento'].map(id_equipamento_to_id_sap_n6)
 
+        # Fazendo o mesmo para a desc do equip
+        id_equipamento_to_id_sap_n6 = SAP_EQP_N6.set_index('ID_SAP_N6')['EQUIPAMENTO PRINCIPAL'].to_dict()
+        eqp_tl_plan['EQUIPAMENTO PRINCIPAL'] = eqp_tl_plan['ID Equipamento'].map(id_equipamento_to_id_sap_n6)
+        column_to_move = eqp_tl_plan.pop("EQUIPAMENTO PRINCIPAL")
+        eqp_tl_plan.insert(1, "EQUIPAMENTO PRINCIPAL", column_to_move)
+
 
         #   CRIAR E FORMATAR DF COM BASE NA BASE DE EQUIPAMENTOS
 
