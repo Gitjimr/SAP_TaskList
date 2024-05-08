@@ -395,7 +395,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         for i in range(len(op_eqp_)):
 
             lista_add_OP_PADRAO = [op_eqp_[i],op_eqp_id[i],np.nan,np.nan,np.nan,op_tipoativ,op_erota,op_trecho2tasklist,op_espec,op_periodicidade,op_estadomaq]
-            task_list_parcial_ = (op_tipoativ[0:4]+' '+op_espec[0:3]+' '+op_estadomaq_+' '+op_periodicidade+' '+op_trecho2tasklist).replace('  ', ' ') if op_erota=='NÃO' else (op_tipoativ[0:4]+' '+op_espec[0:3]+' '+op_estadomaq_+' '+op_periodicidade).replace('  ', ' ')
+            task_list_parcial_ = (op_tipoativ[0:4]+' '+op_espec[0:3]+' '+op_estadomaq_+' '+op_periodicidade+' '+op_trecho2tasklist).replace('  ', ' ') if op_erota=='NÃO' or op_erota=='PERSONALIZADO' else (op_tipoativ[0:4]+' '+op_espec[0:3]+' '+op_estadomaq_+' '+op_periodicidade).replace('  ', ' ')
             lista_add_OP_PADRAO.append(task_list_parcial_)
             lista_add_OP_PADRAO = lista_add_OP_PADRAO+[op_oppadrao,op_optextolongo,op_ctpm,op_duracao,op_operad,op_trabtot]
 
