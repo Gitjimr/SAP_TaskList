@@ -245,15 +245,19 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     )
     op_estadomaq_ = 'FUNC' if op_estadomaq==1 else ''
 
-    #   Selecionar se é rota e complemento da task list
+    #    Selecionar se é rota e complemento da task list
     op_erota = col1.radio(
         label='Rota?',
-        options=['SIM', 'NÃO'],key='OP_EROTA',help='Sendo rota, no título da task list será o local de instalação dos equipamentos.'
+        options=['SIM', 'NÃO', 'PERSONALIZADO'],key='OP_EROTA',help='Sendo rota, no título da task list será o local de instalação dos equipamentos. Para rota personalizada, insira PERSONALIZADO'
     )
-    if op_erota == 'NÃO':
-        op_trecho2tasklist = col1.text_input(label='Descrição de equipamento/componente da Lista de Tarefa',placeholder="Digite aqui",
+    if op_erota == 'NÃO' or op_erota == 'PERSONALIZADO':
+        texto_rota_nao = 'Descrição de equipamento/componente da Lista de Tarefa'
+        texto_rota_personalizado = 'Descrição da rota personalizada'
+        op_trecho2tasklist = col1.text_input(label=texto_rota_nao if op_erota == 'NÃO' else texto_rota_personalizado,
+                            placeholder="Digite aqui",
                             max_chars=20-len(op_periodicidade) if op_estadomaq == 1 else 25-len(op_periodicidade),# if op_erota == 'NÃO' and op_estadomaq == 0 else '',
-                            help='Texto que aparecerá no cabeçalho da lista de tarefas e do item no SAP. Caso seja rota, será o local de instalação.',key='OP_TRECHO2TASKLIST')
+                            help='Texto que aparecerá no cabeçalho da lista de tarefas e do item no SAP. Caso rota SIM, será o local de instalação.',
+                            key='OP_TRECHO2TASKLIST')
         op_trecho2tasklist = op_trecho2tasklist.upper()
         op_trecho2tasklist = op_trecho2tasklist.strip()
     else:
