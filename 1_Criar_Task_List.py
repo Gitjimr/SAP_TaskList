@@ -469,7 +469,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     col2.subheader("Listas de Tarefas Geradas", divider='gray', anchor=False)
 
-    col2.subheader("⚠️ :red[Listas de Tarefas Geradas]", anchor=False)
+    col2.subheader("⚠️ :red[Atenção:]", anchor=False)
     
     col2.markdown("""❗ É recomendável :red[salvar o arquivo sempre que possível] a fim de não haver risco de perder as listas criadas.   
     ❗  Após a conclusão: enviar arquivo para :red[João Ivo] (ter08334@mdb.com.br)
