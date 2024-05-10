@@ -201,7 +201,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         lista_ctpms = SAP_CTPM_filt['CenTrab'].unique().tolist()
 
         lista_tipo_ativ = ['REVI', 'INSP', 'LUBR', 'TROC', 'LIMP', 'REAP', 'TEST', 'AJUS',
-                 'CALI']
+                 'CALI', 'PRED']
 
         lista_periodicidades = ['1D', '7D', '15D', '1M', '2M', '3M', '4M', '5M', '6M', '7M', '8M', '9M',
                                                '10M', '11M'
