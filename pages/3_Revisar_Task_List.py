@@ -134,8 +134,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
     SAP_EQP_filt = SAP_EQP_filt[SAP_EQP_clean['Local de instalação'].str.contains(str(plant_option))]
 
-
-    if uploaded_file2 is not None:
+    try:
         #   Carregando arquivo op_padrao
         with st.spinner('Carregando Op_Padrao...'):
             try:
@@ -150,7 +149,12 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
                         break
                     skiprow += 1
             except:
-                st.write('ERRO AO CARREGAR OP_PADRAO')
+                if uploaded_file2 is None:
+                    pass
+                else:
+                    st.error(
+                        "'ERRO AO CARREGAR PLANILHA. É POSSÍVEL FAZER O DOWNLOAD DO PADRÃO DA PLANILHA, COM 'op_padrao' E 'EQUIPAMENTOS', NA ABA 'CRIAR TASK LIST'.",
+                        icon="⚠️")
 
         with st.spinner('Carregando EQUIPAMENTOS...'):
             try:
@@ -162,10 +166,18 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
         #   Ajustando OP_PADRAO
 
+        OP_PADRAO = pd.DataFrame(OP_PADRAO)
+
+        len_OP_PADRAO_ANTERIOR = len(OP_PADRAO)
+        OP_PADRAO.index.name = 'MyIdx'
         OP_PADRAO.drop_duplicates(inplace=True)  # Para remover todas as linhas duplicadas
-        OP_PADRAO.sort_values(by=['TEXTO TIPO EQUIPAMENTO'],
+        OP_PADRAO['TEXTO TIPO EQUIPAMENTO'] = OP_PADRAO['TEXTO TIPO EQUIPAMENTO'].str.strip()
+        OP_PADRAO.sort_values(by=['TEXTO TIPO EQUIPAMENTO','MyIdx'],
                               inplace=True)  # Ordem com index ordenado com base na task list
         OP_PADRAO.reset_index(drop=True, inplace=True)
+
+        if len_OP_PADRAO_ANTERIOR != len(OP_PADRAO):
+            st.warning("OBSERVAÇÃO: Foram identificadas linhas duplicadas. Diferenciar linhas em 'OPERACAO PADRAO' caso alguma operação se repita.", icon="⚠️")
 
         st.divider()
         #
@@ -195,7 +207,9 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         ]
 
         if not all(coluna in OP_PADRAO.columns for coluna in colunas_op_padrao):
-            st.write('ERRO: COLUNAS FALTANDO. RECOMENDA-SE VERIFICAR PADRÃO NA ABA DE CRIAÇÃO DE TASK LIST.')
+            st.error(
+                "ERRO: COLUNAS FALTANDO. RECOMENDA-SE FAZER DOWNLOAD DA PLANILHA-PADRÃO, CONTENDO 'op_padrao' E 'EQUIPAMENTOS', NA ABA 'CRIAR TASK LIST'.",
+                icon="⚠️")
 
         SAP_CTPM_filt = SAP_CTPM[SAP_CTPM['Cen.'] == str(plant_option)]
         lista_ctpms = SAP_CTPM_filt['CenTrab'].unique().tolist()
@@ -371,6 +385,10 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
         col1.dataframe(data=df_tb_rev, hide_index=True, use_container_width=True)
 
+        OP_PADRAO_save = OP_PADRAO.reset_index()
+
+        st.session_state.OP_PADRAO_SAVE = OP_PADRAO_save
+
         # Download Button
         col2.subheader("⬇️ Download", divider='gray', anchor=False)
 
@@ -387,15 +405,16 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
         except:
             pass
 
-        import io
 
+
+        import io
         buffer3 = io.BytesIO()
         with pd.ExcelWriter(buffer3, engine="xlsxwriter") as writer:
             try:
                 EQUIPAMENTOS.to_excel(writer, sheet_name="EQUIPAMENTOS", index=False)
             except:
                 pass
-            OP_PADRAO.to_excel(writer, sheet_name="op_padrao", index=False)
+            OP_PADRAO_save.to_excel(writer, sheet_name="op_padrao", index=False)
             try:
                 df_tb_rev.to_excel(writer, sheet_name="REVISÕES", index=False)
             except:
@@ -412,3 +431,6 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
 
             )
 
+
+    except:
+        pass
