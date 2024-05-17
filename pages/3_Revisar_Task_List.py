@@ -151,6 +151,10 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             except:
                 if uploaded_file2 is None:
                     pass
+                elif 'TEXTO TIPO EQUIPAMENTO' not in lista_colunas_df_op:
+                    st.error(
+                        "'ERRO AO CARREGAR PLANILHA. É POSSÍVEL FAZER O DOWNLOAD DO PADRÃO DA PLANILHA, COM 'op_padrao' E 'EQUIPAMENTOS', NA ABA 'CRIAR TASK LIST'.",
+                        icon="⚠️")
                 else:
                     st.error(
                         "'ERRO AO CARREGAR PLANILHA. É POSSÍVEL FAZER O DOWNLOAD DO PADRÃO DA PLANILHA, COM 'op_padrao' E 'EQUIPAMENTOS', NA ABA 'CRIAR TASK LIST'.",
