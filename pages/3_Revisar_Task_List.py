@@ -291,6 +291,14 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
                 tb_rev['REVISÃO'].append('HÁ ALGUMA COLUNA OBRIGATÓRIA VAZIA.')
 
             try:
+                if int(OP_PADRAO['DUR_NORMAL_MIN'][i]) == 0:
+                    tb_rev['ÍNDICE'].append(i)
+                    tb_rev['REVISÃO'].append('TEMPO ZERO NÃO É PERMITIDO.')
+            except:
+                tb_rev['ÍNDICE'].append(i)
+                tb_rev['REVISÃO'].append('ERRO COLUNA DUR_NORMAL_MIN.')
+
+            try:
                 if not any(ativ in str(OP_PADRAO['TIPO ATIV'][i]) for ativ in lista_tipo_ativ):
                     tb_rev['ÍNDICE'].append(i)
                     tb_rev['REVISÃO'].append('TIPO DE ATIVIDADE NÃO REGISTRADO NO SAP.')
