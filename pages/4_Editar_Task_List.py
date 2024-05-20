@@ -135,7 +135,7 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
     TL_EDIT['Suboperação'] = pd.to_numeric(TL_EDIT['Suboperação'], downcast='integer')
 
     TL_EDIT.reset_index(drop=True, inplace=True)
-    st.write(TL_EDIT)
+    
 
     SAP_CTPM_filt = SAP_CTPM[SAP_CTPM['Cen.'] == str(TL_EDIT['Centro planejamento'][0])]
     lista_ctpms = SAP_CTPM_filt['CenTrab'].unique().tolist()
