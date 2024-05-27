@@ -452,6 +452,9 @@ if uploaded_file is not None or 'SAP_CTPM' in st.session_state:
             loc_inst_desc_i = SAP_EQP_N6['DESC SISTEMAS / ETAPAS PROCESS'][index_procurado[0]]
             task_list_completa_ = task_list_parcial_ + ' ' + str(loc_inst_desc_i) + ' ' + str(
                 loc_inst_i) if op_erota == 'SIM' else task_list_parcial_ + ' ' + str(loc_inst_i)
+            
+            task_list_completa_ = task_list_parcial_ if op_erota == "PERSONALIZADO" else task_list_completa_
+            
             ### Check dos 40 caracteres para rotas (pegam local de instalação)
             if len(task_list_completa_) > 40:
                 task_list_completa_ = task_list_completa_.replace('.', '').replace(' N0', ' ').replace(' DE ',
