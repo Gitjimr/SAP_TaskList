@@ -57,6 +57,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+prcnt_width = 80
+max_width_str = f"max-width: {prcnt_width}%;"
+st.markdown(f""" 
+            <style> 
+            .reportview-container .main .block-container{{{max_width_str}}}
+            </style>    
+            """,
+            unsafe_allow_html=True)
 
 # Função para realizar checagem: Exluir linhas completamente nulas, duplicatas e resetar o índice
 
